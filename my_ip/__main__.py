@@ -45,7 +45,9 @@ def main():
     args = parse_arguments()
     logging.basicConfig(
         level=[logging.WARNING, logging.INFO, logging.DEBUG][args.verbose],
-        format='%(asctime)s{} %(message)s'.format('' if args.verbose < 2 else ' %(name)-25s %(levelname)-7s'),
+        format='%(asctime)s{} %(message)s'.format(
+            '' if args.verbose < 2 else ' %(name)-20s %(threadName)-30s %(levelname)-7s'
+        ),
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 

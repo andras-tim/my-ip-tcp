@@ -1,27 +1,32 @@
 import logging
 import socketserver
+import threading
 
 _logger = logging.getLogger(__name__)
 
+_BUFFER_SIZE = 100
 _MAGIC_COMMAND = 'get-my-ip'
 
 
 class TcpHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        remote_ip, _ = self.client_address
-        _logger.debug('Incoming connection from {}'.format(remote_ip))
+    def setup(self) -> None:
+        thread = threading.currentThread()
+        thread.name = 'Thread_{}:{}'.format(*self.client_address)
 
-        command = self.__receive_first_short_line(buffer_size=len(_MAGIC_COMMAND) + 1)
+        _logger.debug('Incoming connection')
+
+    def handle(self) -> None:
+        command = self.request.recv(_BUFFER_SIZE).decode().rstrip('\n')
         if command != _MAGIC_COMMAND:
-            _logger.debug('Bad magic command: {!r}'.format(command))
+            _logger.debug('Bad magic command')
             return
 
         response = '{}\n'.format(self.client_address[0])
         self.request.sendall(response.encode())
-        _logger.debug('Answered request')
 
-    def __receive_first_short_line(self, buffer_size) -> str:
-        return self.request.recv(buffer_size).decode().rstrip('\n')
+
+    def finish(self) -> None:
+        _logger.debug('Close socket')
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
