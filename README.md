@@ -17,7 +17,16 @@ This is a yet another "get my IP" stuff on TCP socket
     ```
 
 
-## Ask my IP
-```sh
-echo get-my-ip | nc localhost 7071
-```
+## Get my public IP examples
+  * Simple query with:
+    ```sh
+    echo 'Public IP:'
+    echo get-my-ip | nc localhost 7071
+    echo 'Done'
+    ```
+  * Query IP and waiting for connection termination *(useful for detecting internet interruption)*:
+    ``` sh
+    echo 'Public IP:'
+    echo get-my-ip | nc -q -1 localhost 7071
+    echo 'Connection terminated'
+    ```

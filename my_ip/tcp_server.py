@@ -23,7 +23,11 @@ class TcpHandler(socketserver.BaseRequestHandler):
 
         response = '{}\n'.format(self.client_address[0])
         self.request.sendall(response.encode())
+        _logger.debug('Remote IP has been sent; waiting for remote close')
 
+        if self.request.recv(_BUFFER_SIZE) != b'':
+            _logger.warning('Unwanted data received')
+            return
 
     def finish(self) -> None:
         _logger.debug('Close socket')
@@ -31,6 +35,7 @@ class TcpHandler(socketserver.BaseRequestHandler):
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
+    daemon_threads = True
 
 
 def start_server(host: str, tcp_port: int):
