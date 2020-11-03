@@ -1,4 +1,5 @@
 import logging
+import socket
 import socketserver
 import threading
 
@@ -24,13 +25,24 @@ class TcpHandler(socketserver.BaseRequestHandler):
         response = '{}\n'.format(self.client_address[0])
         self.request.sendall(response.encode())
         _logger.debug('Remote IP has been sent; waiting for remote close')
+        self.__set_keepalive()
 
-        if self.request.recv(_BUFFER_SIZE) != b'':
-            _logger.warning('Unwanted data received')
-            return
+        try:
+            if self.request.recv(_BUFFER_SIZE) != b'':
+                _logger.warning('Unwanted data received')
+                return
+        except TimeoutError:
+            pass
 
     def finish(self) -> None:
         _logger.debug('Close socket')
+
+    def __set_keepalive(self, after_idle_sec: int = 1, interval_sec: int = 3, max_fails: int = 5):
+        _logger.debug('Enable TCP keep-alive')
+        self.request.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, after_idle_sec)
+        self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, interval_sec)
+        self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, max_fails)
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
